@@ -3,4 +3,5 @@
     <string name="create">create</string>
     <string name="what_do_i_need_to_do">please write something</string>
     <string name="hello_friend">Hello friend</string>
+    <string name="one_task">one task</string>
 </resources>

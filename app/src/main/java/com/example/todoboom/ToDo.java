@@ -1,3 +1,4 @@
+package com.example.todoboom;
 
 public class ToDo
 {
@@ -20,5 +21,10 @@ public class ToDo
     public void mark_mission_done()
     {
         mission_done = true;
+    }
+
+    public String get_one_mission()
+    {
+        return one_mission;
     }
 }
