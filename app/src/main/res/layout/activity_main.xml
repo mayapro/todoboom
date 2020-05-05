@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#F8F8CF"
+
     tools:context=".MainActivity">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="675dp"
-        android:background="#C1A6E8"
+        android:layout_height="match_parent"
+        android:background="#F8F8CF"
         android:padding="4dp"
         android:scrollbars="vertical"
-        android:layout_above = "@+id/button_create"
+        app:layout_constraintTop_toTopOf="parent"
         />
 
     <EditText
@@ -21,15 +23,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below='@id/recyclerView'
+        android:layout_alignParentStart="true"
         android:background="#F2F2F2"
         android:hint="@string/what_do_i_need_to_do"
         android:padding="10dp"
         android:textColorHint="#8E8C8C"
         android:textSize="22sp"
         android:textStyle="bold|italic"
-        android:layout_toStartOf="@id/button_create"
-        android:layout_alignParentStart ="true"
-        />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/button_create"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/button_create"
@@ -40,6 +44,11 @@
         android:padding="10dp"
         android:text="@string/create"
         android:textSize="25sp"
-        android:textStyle="bold|italic" />
+        android:textStyle="bold|italic"
+        android:layout_marginBottom="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        />
 
-</RelativeLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
