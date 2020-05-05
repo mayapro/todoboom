@@ -4,24 +4,23 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
-import android.util.Log;
+//import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
-
-import androidx.cardview.widget.CardView;
+import android.widget.Toast;
+//import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import java.util.ArrayList;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity
+{
     private EditText todoText;
-
     private ArrayList<ToDo> exampleList;
     private RecyclerView myRecyclerView;
-    private RecyclerView.Adapter myAdapter;
+    private ToDoAdapter myAdapter;
     private RecyclerView.LayoutManager myLayoutManager;
 
     @Override
@@ -34,13 +33,10 @@ public class MainActivity extends AppCompatActivity {
         Button buttonAnimate = findViewById(R.id.button_create);
 
         exampleList = new ArrayList<ToDo>();
-//        exampleList.add(new ToDo1("my first task", ToDo1.NOT_DONE));
-//        exampleList.add(new ToDo2("my first task111", ToDo2.NOT_DONE));
-//        exampleList.add(new ToDo3("my first task22", ToDo3.NOT_DONE));
-
         createRecycler();
 
-        buttonAnimate.setOnClickListener(new View.OnClickListener() {
+        buttonAnimate.setOnClickListener(new View.OnClickListener()
+        {
             @Override
             public void onClick(View v)
             {
@@ -50,14 +46,21 @@ public class MainActivity extends AppCompatActivity {
                     insertItem(newToDo);
                     todoText.getText().clear();
                 }
+                else
+                {
+                    Toast.makeText(getApplicationContext(),"you can't create an empty TODO item"
+                            ,Toast.LENGTH_SHORT).show();
+                }
             }
 
         });
+
         if (savedInstanceState != null)
         {
             ArrayList<String> mission_temp = savedInstanceState.getStringArrayList("mission");
             ArrayList<Integer> state_temp = savedInstanceState.getIntegerArrayList("mission_state");
-            for(int i=0 ; i<mission_temp.size() ; i++){
+            for(int i=0 ; i<mission_temp.size() ; i++)
+            {
                 exampleList.add(new ToDo(mission_temp.get(i), state_temp.get(i)));
             }
         }
@@ -66,7 +69,18 @@ public class MainActivity extends AppCompatActivity {
     public void insertItem (String newTextToDO)
     {
         exampleList.add(new ToDo(newTextToDO, ToDo.NOT_DONE));
-        myAdapter.notifyItemInserted(exampleList.size() - 1);   // ???? plus1 ????
+        myAdapter.notifyItemInserted(exampleList.size() - 1);
+    }
+
+    public void changeItem(int position) {
+        if (exampleList.get(position).get_mission_state() != ToDo.DONE)
+        {
+            exampleList.get(position).mark_mission_done();
+            Toast.makeText(getApplicationContext(),"TODO " +
+                            exampleList.get(position).get_one_mission() + " is now DONE. BOOM!"
+                    ,Toast.LENGTH_SHORT).show();
+            myAdapter.notifyItemChanged(position);
+        }
     }
 
     public void createRecycler ()
@@ -78,16 +92,27 @@ public class MainActivity extends AppCompatActivity {
 
         myRecyclerView.setLayoutManager(myLayoutManager);
         myRecyclerView.setAdapter(myAdapter);
+
+        myAdapter.setOnItemClickListener(new ToDoAdapter.OnItemClickListener()
+        {
+            @Override
+            public void onItemClick(int position)
+            {
+                changeItem(position);
+            }
+        });
     }
 
 
     @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState)
+    {
         super.onSaveInstanceState(outState);
 
         ArrayList<String> mission=new ArrayList<>();
         ArrayList<Integer> state=new ArrayList<>();
-        for(int i=0;i<exampleList.size();i++){
+        for(int i=0 ;i<exampleList.size(); i++)
+        {
             mission.add(exampleList.get(i).get_one_mission());
             state.add(exampleList.get(i).get_mission_state());
         }
