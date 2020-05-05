@@ -1,5 +1,6 @@
 package com.example.todoboom;
 
+import android.graphics.Color;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
@@ -70,7 +71,15 @@ public class ToDoAdapter extends RecyclerView.Adapter<ToDoAdapter.ToDoViewHolder
     public void onBindViewHolder(@NonNull ToDoViewHolder holder, int position)
     {
         ToDo currentItem = myTodoList.get(position);
-        holder.oneTaskText.setText(currentItem.get_one_mission());
+        if (currentItem.get_mission_state() == ToDo.DONE)
+        {
+            holder.oneTaskText.setTextColor(Color.GRAY);
+            holder.oneTaskText.setText(currentItem.get_one_mission());
+        }
+        else
+        {
+            holder.oneTaskText.setText(currentItem.get_one_mission());
+        }
     }
 
     @Override
