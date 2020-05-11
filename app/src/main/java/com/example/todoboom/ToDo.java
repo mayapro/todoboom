@@ -25,7 +25,7 @@ public class ToDo {
     public void mark_mission_done()
     {
         mission_done = DONE;
-        one_mission = one_mission + " ~done!";
+        one_mission = one_mission + "  done!";
     }
 
     public String get_one_mission()

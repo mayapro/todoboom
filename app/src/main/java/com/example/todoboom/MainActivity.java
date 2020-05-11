@@ -1,8 +1,11 @@
 package com.example.todoboom;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+
+import android.content.DialogInterface;
 import android.os.Bundle;
 //import android.util.Log;
 import android.view.View;
@@ -21,17 +24,17 @@ public class MainActivity extends AppCompatActivity
     private RecyclerView myRecyclerView;
     private ToDoAdapter myAdapter;
     private RecyclerView.LayoutManager myLayoutManager;
+    private AlertDialog.Builder removeMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        todoText = findViewById(R.id.todoText);//get the id for edit text
+        todoText = findViewById(R.id.todoText); //get the id for edit text
         Button buttonAnimate = findViewById(R.id.button_create);
-
         exampleList = new ArrayList<ToDo>();
+
         createRecycler();
 
         buttonAnimate.setOnClickListener(new View.OnClickListener()
@@ -65,12 +68,57 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * function that create a dialog box for the user
+     * @param position - the position of the card that clicked
+     */
+    public void removeMessageCheck (final int position)
+    {
+        removeMessage = new AlertDialog.Builder(this);
+        removeMessage.setMessage("Are You Sure to delete?");
+
+        removeMessage.setPositiveButton("Yes, please", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //perform any action
+                Toast.makeText(getApplicationContext(), "Yes I'm done", Toast.LENGTH_SHORT).show();
+                removeItem(position);
+            }
+        });
+
+        removeMessage.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //perform any action
+                Toast.makeText(getApplicationContext(), "Not done", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    /**
+     * function to add an item from the todolist
+     * @param newTextToDO - the text of the the todo_item
+     */
     public void insertItem (String newTextToDO)
     {
         exampleList.add(new ToDo(newTextToDO, ToDo.NOT_DONE));
         myAdapter.notifyItemInserted(exampleList.size() - 1);
     }
 
+    /**
+     * function to remove an item from the todo_list
+     * @param position - the position of the item in the list
+     */
+    public void removeItem (int position)
+    {
+        exampleList.remove(position);
+        myAdapter.notifyItemRemoved(position);
+    }
+
+    /**
+     * function to change the status the item of the todo_list to done
+     * @param position - the position of the item in the list
+     */
     public void changeItem(int position) {
         if (exampleList.get(position).get_mission_state() != ToDo.DONE)
         {
@@ -98,6 +146,14 @@ public class MainActivity extends AppCompatActivity
             public void onItemClick(int position)
             {
                 changeItem(position);
+            }
+
+            @Override
+            public void onLongItemClick(int position)
+            {
+                removeMessageCheck(position);
+                AlertDialog alertDialog = removeMessage.create();
+                alertDialog.show();
             }
         });
     }

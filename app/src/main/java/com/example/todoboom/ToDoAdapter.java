@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 //import android.widget.AdapterView;
+import android.widget.AdapterView;
 import android.widget.TextView;
 import android.view.LayoutInflater;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ public class ToDoAdapter extends RecyclerView.Adapter<ToDoAdapter.ToDoViewHolder
     public interface OnItemClickListener
     {
         void onItemClick(int position);
+        void onLongItemClick(int position); // called when there is a long click
     }
     public void setOnItemClickListener(ToDoAdapter.OnItemClickListener listener)
     {
@@ -49,6 +51,23 @@ public class ToDoAdapter extends RecyclerView.Adapter<ToDoAdapter.ToDoViewHolder
                     }
                 }
             });
+
+            itemView.setOnLongClickListener(new View.OnLongClickListener()
+            {
+                @Override
+                public boolean onLongClick(View v)
+                {
+                    if (listener != null) {
+                        int position = getAdapterPosition();
+                        if (position != RecyclerView.NO_POSITION)
+                        {
+                            listener.onLongItemClick(position);
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+            });
         }
     }
 
@@ -67,6 +86,11 @@ public class ToDoAdapter extends RecyclerView.Adapter<ToDoAdapter.ToDoViewHolder
         return evh;
     }
 
+    /**
+     * function for changing the state of mission to done
+     * @param holder - ToDoViewHolder item
+     * @param position - the position of the wanted item to change
+     */
     @Override
     public void onBindViewHolder(@NonNull ToDoViewHolder holder, int position)
     {
