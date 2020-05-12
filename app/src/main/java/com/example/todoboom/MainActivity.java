@@ -5,15 +5,23 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-//import android.util.Log;
+import android.util.Log;
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 
@@ -26,6 +34,7 @@ public class MainActivity extends AppCompatActivity
     private RecyclerView.LayoutManager myLayoutManager;
     private AlertDialog.Builder removeMessage;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -34,8 +43,9 @@ public class MainActivity extends AppCompatActivity
         todoText = findViewById(R.id.todoText); //get the id for edit text
         Button buttonAnimate = findViewById(R.id.button_create);
         exampleList = new ArrayList<ToDo>();
-
         createRecycler();
+
+        loadData();
 
         buttonAnimate.setOnClickListener(new View.OnClickListener()
         {
@@ -47,6 +57,7 @@ public class MainActivity extends AppCompatActivity
                     String newToDo = todoText.getText().toString();
                     insertItem(newToDo);
                     todoText.getText().clear();
+                    saveData();
                 }
                 else
                 {
@@ -65,6 +76,38 @@ public class MainActivity extends AppCompatActivity
             {
                 exampleList.add(new ToDo(mission_temp.get(i), state_temp.get(i)));
             }
+
+        }
+
+    }
+
+    private void saveData() {
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(exampleList);
+        editor.putString("task list", json);
+        editor.apply();
+    }
+
+    private void loadData() {
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = sharedPreferences.getString("task list", null);
+        Type type = new TypeToken<ArrayList<ToDo>>() {}.getType();
+        ArrayList<ToDo> tmpexampleList = gson.fromJson(json, type);
+        if (tmpexampleList != null){
+            exampleList.clear();
+            for (int i = 0; i < tmpexampleList.size(); i++)
+            {
+                exampleList.add(new ToDo(tmpexampleList.get(i).get_one_mission(), tmpexampleList.get(i).get_mission_state()));
+                myAdapter.notifyItemInserted(exampleList.size() - 1);
+            }
+            Log.d("size of list", String.valueOf(tmpexampleList.size()));
+        }
+        if (exampleList == null) {
+            Log.d("size of list", "0");
+            exampleList = new ArrayList<>();
         }
     }
 
@@ -83,6 +126,14 @@ public class MainActivity extends AppCompatActivity
                 //perform any action
                 Toast.makeText(getApplicationContext(), "Yes I'm done", Toast.LENGTH_SHORT).show();
                 removeItem(position);
+
+                SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.clear();
+                Gson gson = new Gson();
+                String json = gson.toJson(exampleList);
+                editor.putString("task list", json);
+                editor.apply();
             }
         });
 
@@ -101,6 +152,7 @@ public class MainActivity extends AppCompatActivity
      */
     public void insertItem (String newTextToDO)
     {
+        Log.d("sssssssssssssssssssss", "1111111111111111");
         exampleList.add(new ToDo(newTextToDO, ToDo.NOT_DONE));
         myAdapter.notifyItemInserted(exampleList.size() - 1);
     }
@@ -129,6 +181,7 @@ public class MainActivity extends AppCompatActivity
             myAdapter.notifyItemChanged(position);
         }
     }
+
 
     public void createRecycler ()
     {
