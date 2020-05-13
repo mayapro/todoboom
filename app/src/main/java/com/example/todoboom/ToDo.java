@@ -17,17 +17,26 @@ public class ToDo {
         this.mission_done = state;
     }
 
+    /**
+     * @return the status of the mission - done or not
+     */
     public Integer get_mission_state()
     {
         return mission_done;
     }
 
+    /**
+     * changes the status of the mission to done
+     */
     public void mark_mission_done()
     {
         mission_done = DONE;
         one_mission = one_mission + "  done!";
     }
 
+    /**
+     * @return the mission (string)
+     */
     public String get_one_mission()
     {
         return one_mission;

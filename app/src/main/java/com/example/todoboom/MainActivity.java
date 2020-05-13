@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.preference.PreferenceManager;
@@ -55,7 +56,7 @@ public class MainActivity extends AppCompatActivity
                 if (!todoText.getText().toString().equals("")) //check whether the entered text is not null
                 {
                     String newToDo = todoText.getText().toString();
-                    insertItem(newToDo);
+                    insertItem(newToDo, ToDo.NOT_DONE);
                     todoText.getText().clear();
                     saveData();
                 }
@@ -81,35 +82,42 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /**
+     * function for updating SharedPreferences with the changing in exampleList
+     */
     private void saveData() {
-        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+        SharedPreferences sp = getSharedPreferences("shared preferences", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.clear();
         Gson gson = new Gson();
         String json = gson.toJson(exampleList);
         editor.putString("task list", json);
         editor.apply();
     }
 
+    /**
+     * function for loading SharedPreferences with exampleList
+     */
     private void loadData() {
-        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
+        SharedPreferences sp = getSharedPreferences("shared preferences", MODE_PRIVATE);
         Gson gson = new Gson();
-        String json = sharedPreferences.getString("task list", null);
+        String json = sp.getString("task list", null);
         Type type = new TypeToken<ArrayList<ToDo>>() {}.getType();
         ArrayList<ToDo> tmpexampleList = gson.fromJson(json, type);
         if (tmpexampleList != null){
             exampleList.clear();
             for (int i = 0; i < tmpexampleList.size(); i++)
             {
-                exampleList.add(new ToDo(tmpexampleList.get(i).get_one_mission(), tmpexampleList.get(i).get_mission_state()));
-                myAdapter.notifyItemInserted(exampleList.size() - 1);
+                insertItem(tmpexampleList.get(i).get_one_mission(), tmpexampleList.get(i).get_mission_state());
             }
             Log.d("size of list", String.valueOf(tmpexampleList.size()));
         }
-        if (exampleList == null) {
+        if (tmpexampleList == null) {
             Log.d("size of list", "0");
             exampleList = new ArrayList<>();
         }
     }
+
 
     /**
      * function that create a dialog box for the user
@@ -127,13 +135,7 @@ public class MainActivity extends AppCompatActivity
                 Toast.makeText(getApplicationContext(), "Yes I'm done", Toast.LENGTH_SHORT).show();
                 removeItem(position);
 
-                SharedPreferences sharedPreferences = getSharedPreferences("shared preferences", MODE_PRIVATE);
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.clear();
-                Gson gson = new Gson();
-                String json = gson.toJson(exampleList);
-                editor.putString("task list", json);
-                editor.apply();
+                saveData();
             }
         });
 
@@ -144,16 +146,16 @@ public class MainActivity extends AppCompatActivity
                 Toast.makeText(getApplicationContext(), "Not done", Toast.LENGTH_SHORT).show();
             }
         });
+
     }
 
     /**
      * function to add an item from the todolist
      * @param newTextToDO - the text of the the todo_item
      */
-    public void insertItem (String newTextToDO)
+    public void insertItem (String newTextToDO, int status)
     {
-        Log.d("sssssssssssssssssssss", "1111111111111111");
-        exampleList.add(new ToDo(newTextToDO, ToDo.NOT_DONE));
+        exampleList.add(new ToDo(newTextToDO, status));
         myAdapter.notifyItemInserted(exampleList.size() - 1);
     }
 
@@ -182,7 +184,9 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
+    /**
+     * function that create our recycler in the app and mange the clicks on the cards
+     */
     public void createRecycler ()
     {
         myRecyclerView = findViewById(R.id.recyclerView);
@@ -211,7 +215,11 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-
+    /**
+     * function for saving all the todoitems when shifting from landscape mode to portrait
+     * and in reverse
+     * @param outState - bundle
+     */
     @Override
     protected void onSaveInstanceState(@NonNull Bundle outState)
     {
