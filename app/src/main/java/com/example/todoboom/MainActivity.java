@@ -14,14 +14,19 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -54,23 +59,23 @@ public class MainActivity extends AppCompatActivity
     public static final Integer DELETE = 2;
 
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private DocumentReference noteRef = db.document("Notebook/My First Note"); // i need to change it!!!
+    private TextView textViewData;
+
 
     private Integer counter = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         todoText = findViewById(R.id.todoText); //get the id for edit text
         Button buttonAnimate = findViewById(R.id.button_create);
         exampleList = new ArrayList<ToDo>();
         createRecycler();
-
-        loadData();
-
-
+        deleteNote();
+        loadNote();
 
         buttonAnimate.setOnClickListener(new View.OnClickListener()
         {
@@ -88,8 +93,6 @@ public class MainActivity extends AppCompatActivity
                     todoText.getText().clear();
 
                     saveNote();
-
-                    saveData();
                 }
                 else
                 {
@@ -109,27 +112,44 @@ public class MainActivity extends AppCompatActivity
             ArrayList<String> edit_timestamp_temp = savedInstanceState.getStringArrayList("edit_timestamp");
             ArrayList<Integer> mission_id_temp = savedInstanceState.getIntegerArrayList("mission_id");
 
-//            Log.d("TAG1", "exampleList size: "+ exampleList.size());
             exampleList.clear();  // why would i need that? i need to check it
             for(int i=0 ; i<mission_temp.size() ; i++)
             {
+                Log.d("is this a problem", String.valueOf(i));
+
                 exampleList.add(new ToDo(mission_temp.get(i), timestamp_temp.get(i),
                         edit_timestamp_temp.get(i), mission_id_temp.get(i), state_temp.get(i)));
             }
         }
-
     }
 
+//    @Override
+//    protected void onStart() {
+//        super.onStart();
+//        noteRef.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
+//            @Override
+//            public void onEvent(DocumentSnapshot documentSnapshot, FirebaseFirestoreException e) {
+//                if (e != null) {
+//                    Toast.makeText(MainActivity.this, "Error while loading!", Toast.LENGTH_SHORT).show();
+////                    Log.d(TAG, e.toString());
+//                    return;
+//                }
+//                if (documentSnapshot.exists()) {
+//                    loadData(documentSnapshot);
+//                    Log.d("is this a problem", "made it");
+//                }
+//            }
+//        });
+//    }
 
     public void saveNote() {
         Gson gson = new Gson();
         String json = gson.toJson(exampleList);
-        Log.d("made it", "so far");
-//        String title = editTextTitle.getText().toString();
-//        String description = editTextDescription.getText().toString();
+
         Map<String, Object> note = new HashMap<>();
         note.put("KEY_TITLE", json);
-//        note.put(KEY_DESCRIPTION, description);
+        note.put("counterForId", String.valueOf(counter));
+
         db.collection("Notebook").document("My First Note").set(note)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
@@ -141,9 +161,34 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         Toast.makeText(MainActivity.this, "Error!", Toast.LENGTH_SHORT).show();
-//                        Log.d(TAG, e.toString());
                     }
                 });
+    }
+
+    public void loadNote() {
+        noteRef.get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                    @Override
+                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                        if (documentSnapshot.exists()) {
+                            loadData(documentSnapshot);
+                        } else {
+                            Log.d("maya", "problem");
+                            Toast.makeText(MainActivity.this, "Document does not exist", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(MainActivity.this, "Error!", Toast.LENGTH_SHORT).show();
+                        Log.d("TAG", e.toString());
+                    }
+                });
+    }
+
+    public void deleteNote() {
+        noteRef.delete();
     }
 
     /**
@@ -157,21 +202,20 @@ public class MainActivity extends AppCompatActivity
         String json = gson.toJson(exampleList);
         editor.putString("task list", json);
 
-        editor.putInt("counter", counter);
+        editor.putInt("counterForId", counter);
         editor.apply();
     }
 
     /**
      * function for loading SharedPreferences with exampleList
      */
-    private void loadData() {
-//        SharedPreferences spCounter = getSharedPreferences("counter", MODE_PRIVATE);
-
-        SharedPreferences sp = getSharedPreferences("shared preferences", MODE_PRIVATE);
-        counter = sp.getInt("counter", 0);
+    private void loadData(DocumentSnapshot documentSnapshot) {
+        String allData = documentSnapshot.getString("KEY_TITLE");
 
         Gson gson = new Gson();
-        String json = sp.getString("task list", null);
+        String json = allData;
+
+        counter = Integer.valueOf(documentSnapshot.getString("counterForId"));
         Type type = new TypeToken<ArrayList<ToDo>>() {}.getType();
         ArrayList<ToDo> tmpexampleList = gson.fromJson(json, type);
 
@@ -179,19 +223,19 @@ public class MainActivity extends AppCompatActivity
             exampleList.clear();
             for (int i = 0; i < tmpexampleList.size(); i++)
             {
-                insertItem(tmpexampleList.get(i).get_one_mission(),
+                exampleList.add(new ToDo(tmpexampleList.get(i).get_one_mission(),
                         tmpexampleList.get(i).get_creation_timestamp(),
                         tmpexampleList.get(i).get_edit_timestamp(),
                         tmpexampleList.get(i).get_mission_state(),
-                        tmpexampleList.get(i).get_mission_id());
+                        tmpexampleList.get(i).get_mission_id()));
+                myAdapter.notifyDataSetChanged();
+
             }
-            Log.d("size of list", String.valueOf(tmpexampleList.size()));
         }
         if (tmpexampleList == null) {
             Log.d("size of list", "0");
             exampleList = new ArrayList<>();
         }
-
     }
 
 
@@ -204,8 +248,6 @@ public class MainActivity extends AppCompatActivity
         int mMinute = cc.get(Calendar.MINUTE);
 
         String newTime = mDay + "/" + month + "/" + year +"   " + mHour + ":" + mMinute;
-
-        Log.d("time_format", "time_format" + String.format("%02d:%02d", mHour , mMinute));
         return newTime;
     }
 
@@ -338,7 +380,7 @@ public class MainActivity extends AppCompatActivity
 
                     exampleList.get(tempPosition).edit_mission(editedTodo, tempTime);
                     myAdapter.notifyItemChanged(tempPosition);
-                    saveData();
+                    saveNote();
                 }
 
                 if (clicked_button == ToDo.DONE)
@@ -349,7 +391,7 @@ public class MainActivity extends AppCompatActivity
 
                     exampleList.get(tempPosition).mark_mission_done();
                     myAdapter.notifyItemChanged(tempPosition);
-                    saveData();
+                    saveNote();
                 }
 
                 if (clicked_button == ToDo.NOT_DONE)
@@ -360,7 +402,7 @@ public class MainActivity extends AppCompatActivity
 
                     exampleList.get(tempPosition).mark_mission_not_done(tempTime);
                     myAdapter.notifyItemChanged(tempPosition);
-                    saveData();
+                    saveNote();
                 }
 
                 if (clicked_button == DELETE)
@@ -368,7 +410,7 @@ public class MainActivity extends AppCompatActivity
                     int tempPosition = data.getIntExtra("position", 0);
                     removeItem(tempPosition);
 
-                    saveData();
+                    saveNote();
                 }
             }
 //            if (resultCode == RESULT_CANCELED) {
@@ -395,6 +437,8 @@ public class MainActivity extends AppCompatActivity
         ArrayList<String> editTimeStemp =new ArrayList<>();
         ArrayList<Integer> ids=new ArrayList<>();
 
+        Log.d("why would you make", String.valueOf(exampleList.size()));
+
         for(int i=0 ;i<exampleList.size(); i++)
         {
             mission.add(exampleList.get(i).get_one_mission());
@@ -410,5 +454,8 @@ public class MainActivity extends AppCompatActivity
         outState.putStringArrayList("edit_timestamp",editTimeStemp);
         outState.putIntegerArrayList("mission_id",ids);
 
+        Log.d("why would you", String.valueOf(exampleList.size()));
+
     }
+
 }
