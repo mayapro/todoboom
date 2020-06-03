@@ -351,9 +351,7 @@ public class MainActivity extends AppCompatActivity
         intent.putExtra(EDIT_TIME, editTime);
 
         intent.putExtra("position", position);
-
 //        intent.putExtra("currentId", currentId);
-
         startActivityForResult(intent, 1);
     }
 
