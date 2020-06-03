@@ -16,7 +16,7 @@ import android.widget.Toast;
 public class ActivityToDoDone extends AppCompatActivity {
     private TextView createTime;
     private TextView editTime;
-//    private Integer currentId;
+    private Integer currentId;
     private Integer position;
     private Intent resultIntent;
 
@@ -36,7 +36,7 @@ public class ActivityToDoDone extends AppCompatActivity {
 
         Intent intent = getIntent();
 
-//        currentId = intent.getIntExtra("currentId", 0);
+        currentId = intent.getIntExtra("currentId", 0);
         position = intent.getIntExtra("position", 0);
 
         Log.d("position in item", String.valueOf(position));
@@ -97,6 +97,8 @@ public class ActivityToDoDone extends AppCompatActivity {
                 resultIntent.putExtra("position", position);
                 // sends if there is a need to update the todo_mission
                 resultIntent.putExtra(MainActivity.CLICKED_BUTTON, MainActivity.DELETE);
+
+                resultIntent.putExtra("currentId", currentId);
 
                 setResult(RESULT_OK, resultIntent);
                 finish();

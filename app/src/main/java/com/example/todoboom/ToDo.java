@@ -1,6 +1,7 @@
 package com.example.todoboom;
 
 
+import android.util.Log;
 
 public class ToDo {
     // Instance Variables
@@ -16,9 +17,10 @@ public class ToDo {
     static final int NOT_DONE = 0;
 
     // Constructor Declaration of Class
-    public ToDo(String name, String timestamp, String editstamp,  int state, int newId)
+    public ToDo(String name, String oldName, String timestamp, String editstamp,  int state, int newId)
     {
         this.content = name;
+        this.oldContent = oldName;
         this.creation_timestamp = timestamp;
         this.edit_timestamp = editstamp;
         this.is_done = state;
@@ -39,7 +41,7 @@ public class ToDo {
     public void mark_mission_done()
     {
         is_done = DONE;
-        this.oldContent = content;
+        this.oldContent = String.valueOf(content);
         this.content  = content  + "  done!";
     }
 
@@ -49,7 +51,7 @@ public class ToDo {
     public void mark_mission_not_done(String editstamp)
     {
         is_done = NOT_DONE;
-        this.content = oldContent;
+        this.content =  String.valueOf(oldContent);
         this.edit_timestamp = editstamp;
     }
 
@@ -65,6 +67,14 @@ public class ToDo {
     public String get_one_mission()
     {
         return content ;
+    }
+
+    /**
+     * @return the mission (string)
+     */
+    public String get_old_mission()
+    {
+        return oldContent ;
     }
 
     /**
@@ -90,5 +100,6 @@ public class ToDo {
     {
         return mission_id ;
     }
+
 
 }

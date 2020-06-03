@@ -21,10 +21,16 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -57,9 +63,9 @@ public class MainActivity extends AppCompatActivity
     public static final Integer DELETE = 2;
 
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private CollectionReference notebookRef = db.collection("Notebook");
     private DocumentReference noteRef = db.document("Notebook/My First Note"); // i need to change it!!!
-    private TextView textViewData;
-
+    private DocumentReference noteRef1 = db.document("Notebook/note5"); // i need to change it!!!
 
     private Integer counter = 0;
 
@@ -72,8 +78,6 @@ public class MainActivity extends AppCompatActivity
         Button buttonAnimate = findViewById(R.id.button_create);
         exampleList = new ArrayList<ToDo>();
         createRecycler();
-        deleteNote();
-        loadNote();
 
         buttonAnimate.setOnClickListener(new View.OnClickListener()
         {
@@ -90,7 +94,9 @@ public class MainActivity extends AppCompatActivity
                     insertItem(newToDo, tempTime , tempTime, ToDo.NOT_DONE, counter);
                     todoText.getText().clear();
 
-                    saveNote();
+                    addNote(exampleList.size()-1);
+                    updatecounter();
+
                 }
                 else
                 {
@@ -104,136 +110,131 @@ public class MainActivity extends AppCompatActivity
         if (savedInstanceState != null)
         {
             ArrayList<String> mission_temp = savedInstanceState.getStringArrayList("mission");
+            ArrayList<String> mission_old = savedInstanceState.getStringArrayList("old_mission");
+
             ArrayList<Integer> state_temp = savedInstanceState.getIntegerArrayList("mission_state");
 
             ArrayList<String> timestamp_temp = savedInstanceState.getStringArrayList("timestamp");
             ArrayList<String> edit_timestamp_temp = savedInstanceState.getStringArrayList("edit_timestamp");
             ArrayList<Integer> mission_id_temp = savedInstanceState.getIntegerArrayList("mission_id");
 
-            exampleList.clear();  // why would i need that? i need to check it
+            exampleList.clear();
             for(int i=0 ; i<mission_temp.size() ; i++)
             {
-                Log.d("is this a problem", String.valueOf(i));
 
-                exampleList.add(new ToDo(mission_temp.get(i), timestamp_temp.get(i),
+                exampleList.add(new ToDo(mission_temp.get(i), mission_old.get(i), timestamp_temp.get(i),
                         edit_timestamp_temp.get(i), mission_id_temp.get(i), state_temp.get(i)));
             }
         }
     }
 
-//    @Override
-//    protected void onStart() {
-//        super.onStart();
-//        noteRef.addSnapshotListener(this, new EventListener<DocumentSnapshot>() {
-//            @Override
-//            public void onEvent(DocumentSnapshot documentSnapshot, FirebaseFirestoreException e) {
-//                if (e != null) {
-//                    Toast.makeText(MainActivity.this, "Error while loading!", Toast.LENGTH_SHORT).show();
-////                    Log.d(TAG, e.toString());
-//                    return;
-//                }
-//                if (documentSnapshot.exists()) {
-//                    loadData(documentSnapshot);
-//                    Log.d("is this a problem", "made it");
-//                }
-//            }
-//        });
-//    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        notebookRef.addSnapshotListener(this, new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(QuerySnapshot queryDocumentSnapshots, FirebaseFirestoreException e) {
+                if (e != null) {
+                    return;
+                }
 
-    public void saveNote() {
+                exampleList.clear();
+
+                for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                    String allData = documentSnapshot.getString("KEY_TITLE");
+                    if (allData.equals("0"))
+                    {
+                        counter = Integer.valueOf(documentSnapshot.getString("noteCounter"));
+                    }
+                    else {
+
+                        Gson gson = new Gson();
+                        Type type = new TypeToken<ToDo>() {
+                        }.getType();
+                        ToDo tmpexampleList = gson.fromJson(allData, type);
+
+                        exampleList.add(new ToDo(tmpexampleList.get_one_mission(),
+                                tmpexampleList.get_old_mission(),
+                                tmpexampleList.get_creation_timestamp(),
+                                tmpexampleList.get_edit_timestamp(),
+                                tmpexampleList.get_mission_state(),
+                                tmpexampleList.get_mission_id()));
+
+                        myAdapter.notifyDataSetChanged();
+                    }
+                }
+            }
+        });
+    }
+
+
+    public void addNotecounter() {
+        String noteName = "MainNoteCounter";
+        Map<String, Object> note = new HashMap<>();
+        note.put("noteCounter", String.valueOf(counter));
+        note.put("KEY_TITLE", "0");
+
+        notebookRef.document(noteName).set(note);
+    }
+
+    public void updatecounter() {
+        String noteName = "MainNoteCounter";
+        Map<String, Object> note = new HashMap<>();
+        note.put("noteCounter", String.valueOf(counter));
+        note.put("KEY_TITLE", "0");
+
+        notebookRef.document(noteName).set(note);
+    }
+
+    public void addNote(int position) {
         Gson gson = new Gson();
-        String json = gson.toJson(exampleList);
+        String json = gson.toJson(exampleList.get(position));
 
+        String noteName = "note" + exampleList.get(position).get_mission_id();
         Map<String, Object> note = new HashMap<>();
         note.put("KEY_TITLE", json);
-        note.put("counterForId", String.valueOf(counter));
-
-        db.collection("Notebook").document("My First Note").set(note)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Toast.makeText(MainActivity.this, "Note saved", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(MainActivity.this, "Error!", Toast.LENGTH_SHORT).show();
-                    }
-                });
+        notebookRef.document(noteName).set(note);
     }
 
-    public void loadNote() {
-        noteRef.get()
-                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+    public void loadNotes() {
+        notebookRef.whereGreaterThanOrEqualTo("priority", 2)
+                .orderBy("priority", Query.Direction.DESCENDING)
+                .limit(3)
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
                     @Override
-                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        if (documentSnapshot.exists()) {
-                            loadData(documentSnapshot);
-                        } else {
-                            Log.d("maya", "problem");
-                            Toast.makeText(MainActivity.this, "Document does not exist", Toast.LENGTH_SHORT).show();
+                    public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
+                        exampleList.clear();
+
+                        for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
+                            String allData = documentSnapshot.getString("KEY_TITLE");
+                            if (allData.equals("0"))
+                            {
+                                counter = Integer.valueOf(documentSnapshot.getString("noteCounter"));
+                            }
+                            else {
+                                Gson gson = new Gson();
+                                Type type = new TypeToken<ToDo>() {
+                                }.getType();
+                                ToDo tmpexampleList = gson.fromJson(allData, type);
+                                exampleList.add(new ToDo(tmpexampleList.get_one_mission(),
+                                        tmpexampleList.get_old_mission(),
+                                        tmpexampleList.get_creation_timestamp(),
+                                        tmpexampleList.get_edit_timestamp(),
+                                        tmpexampleList.get_mission_state(),
+                                        tmpexampleList.get_mission_id()));
+                                myAdapter.notifyDataSetChanged();
+                            }
                         }
                     }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(MainActivity.this, "Error!", Toast.LENGTH_SHORT).show();
-                        Log.d("TAG", e.toString());
-                    }
                 });
     }
 
-    public void deleteNote() {
-        noteRef.delete();
-    }
 
-    /**
-     * function for updating SharedPreferences with the changing in exampleList
-     */
-    private void saveData() {
-        SharedPreferences sp = getSharedPreferences("shared preferences", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.clear();
-        Gson gson = new Gson();
-        String json = gson.toJson(exampleList);
-        editor.putString("task list", json);
 
-        editor.putInt("counterForId", counter);
-        editor.apply();
-    }
-
-    /**
-     * function for loading SharedPreferences with exampleList
-     */
-    private void loadData(DocumentSnapshot documentSnapshot) {
-        String allData = documentSnapshot.getString("KEY_TITLE");
-
-        Gson gson = new Gson();
-        String json = allData;
-
-        counter = Integer.valueOf(documentSnapshot.getString("counterForId"));
-        Type type = new TypeToken<ArrayList<ToDo>>() {}.getType();
-        ArrayList<ToDo> tmpexampleList = gson.fromJson(json, type);
-
-        if (tmpexampleList != null){
-            exampleList.clear();
-            for (int i = 0; i < tmpexampleList.size(); i++)
-            {
-                exampleList.add(new ToDo(tmpexampleList.get(i).get_one_mission(),
-                        tmpexampleList.get(i).get_creation_timestamp(),
-                        tmpexampleList.get(i).get_edit_timestamp(),
-                        tmpexampleList.get(i).get_mission_state(),
-                        tmpexampleList.get(i).get_mission_id()));
-                myAdapter.notifyDataSetChanged();
-
-            }
-        }
-        if (tmpexampleList == null) {
-            Log.d("size of list", "0");
-            exampleList = new ArrayList<>();
-        }
+    public void deleteNote(int id) {
+        String toDelete = "Notebook/note" + id;
+        db.document(toDelete).delete();
     }
 
 
@@ -255,7 +256,7 @@ public class MainActivity extends AppCompatActivity
      */
     public void insertItem (String newTextToDO, String tempTime, String tempTime1, int status, int id)
     {
-        exampleList.add(new ToDo(newTextToDO, tempTime, tempTime1, status, id));
+        exampleList.add(new ToDo(newTextToDO, newTextToDO, tempTime, tempTime1, status, id));
         myAdapter.notifyItemInserted(exampleList.size() - 1);
     }
 
@@ -269,20 +270,17 @@ public class MainActivity extends AppCompatActivity
         myAdapter.notifyItemRemoved(position);
     }
 
-    /**
-     * function to change the status the item of the todo_list to done
-     * @param position - the position of the item in the list
-     */
-    public void changeItem(int position) {
-        if (exampleList.get(position).get_mission_state() != ToDo.DONE)
-        {
-            exampleList.get(position).mark_mission_done();
-            Toast.makeText(getApplicationContext(),"TODO " +
-                            exampleList.get(position).get_one_mission() + " is now DONE. BOOM!"
-                    ,Toast.LENGTH_SHORT).show();
-            myAdapter.notifyItemChanged(position);
-        }
-    }
+//    /**
+//     * function to change the status the item of the todo_list to done
+//     * @param position - the position of the item in the list
+//     */
+//    public void changeItem(int position) {
+//        exampleList.get(position).mark_mission_done();
+//        Toast.makeText(getApplicationContext(),"(TODO1) " +
+//                        exampleList.get(position).get_one_mission() + " is now DONE. BOOM!"
+//                ,Toast.LENGTH_SHORT).show();
+////        myAdapter.notifyItemChanged(position);
+//    }
 
     /**
      * function that create our recycler in the app and mange the clicks on the cards
@@ -305,7 +303,6 @@ public class MainActivity extends AppCompatActivity
                 if (exampleList.get(position).get_mission_state() == ToDo.DONE)
                 {
                     openActivityDone(position);
-//                    changeItem(position);
                 }
                 else
                 {
@@ -323,7 +320,7 @@ public class MainActivity extends AppCompatActivity
         String todoMission = exampleList.get(position).get_one_mission();
         String createTime = exampleList.get(position).get_creation_timestamp();
         String editTime = exampleList.get(position).get_edit_timestamp();
-//        Integer currentId = (Integer) exampleList.get(position).get_mission_id();
+        Integer currentId = (Integer) exampleList.get(position).get_mission_id();
 
         Intent intent = new Intent(this, ActivityToDoDone.class);
         intent.putExtra(EXTRA_TEXT, todoMission);
@@ -332,7 +329,7 @@ public class MainActivity extends AppCompatActivity
 
         intent.putExtra("position", position);
 
-//        intent.putExtra("currentId", currentId);
+        intent.putExtra("currentId", currentId);
 
         startActivityForResult(intent, 1);
     }
@@ -378,7 +375,7 @@ public class MainActivity extends AppCompatActivity
 
                     exampleList.get(tempPosition).edit_mission(editedTodo, tempTime);
                     myAdapter.notifyItemChanged(tempPosition);
-                    saveNote();
+                    addNote(tempPosition);
                 }
 
                 if (clicked_button == ToDo.DONE)
@@ -388,8 +385,12 @@ public class MainActivity extends AppCompatActivity
                     String tempTime = get_time(cc);
 
                     exampleList.get(tempPosition).mark_mission_done();
+                    Toast.makeText(getApplicationContext(),"TODO " +
+                                    exampleList.get(tempPosition).get_one_mission() + " is now DONE. BOOM!"
+                            ,Toast.LENGTH_SHORT).show();
+
                     myAdapter.notifyItemChanged(tempPosition);
-                    saveNote();
+                    addNote(tempPosition);
                 }
 
                 if (clicked_button == ToDo.NOT_DONE)
@@ -399,21 +400,21 @@ public class MainActivity extends AppCompatActivity
                     String tempTime = get_time(cc);
 
                     exampleList.get(tempPosition).mark_mission_not_done(tempTime);
+
                     myAdapter.notifyItemChanged(tempPosition);
-                    saveNote();
+                    addNote(tempPosition);
                 }
 
                 if (clicked_button == DELETE)
                 {
                     int tempPosition = data.getIntExtra("position", 0);
+                    int tempId = data.getIntExtra("currentId", 0);
+
                     removeItem(tempPosition);
 
-                    saveNote();
+                    deleteNote(tempId);
                 }
             }
-//            if (resultCode == RESULT_CANCELED) {
-//                mTextViewResult.setText("Nothing selected");
-//            }
         }
     }
 
@@ -429,30 +430,33 @@ public class MainActivity extends AppCompatActivity
         super.onSaveInstanceState(outState);
 
         ArrayList<String> mission=new ArrayList<>();
+        ArrayList<String> oldMission = new ArrayList<>();
+
         ArrayList<Integer> state=new ArrayList<>();
+
 
         ArrayList<String> timeStemp =new ArrayList<>();
         ArrayList<String> editTimeStemp =new ArrayList<>();
         ArrayList<Integer> ids=new ArrayList<>();
 
-        Log.d("why would you make", String.valueOf(exampleList.size()));
 
         for(int i=0 ;i<exampleList.size(); i++)
         {
             mission.add(exampleList.get(i).get_one_mission());
+            oldMission.add(exampleList.get(i).get_old_mission());
             state.add(exampleList.get(i).get_mission_state());
             timeStemp.add(exampleList.get(i).get_creation_timestamp());
             editTimeStemp.add(exampleList.get(i).get_edit_timestamp());
             ids.add(exampleList.get(i).get_mission_id());
         }
         outState.putStringArrayList("mission",mission);
+        outState.putStringArrayList("old_mission",oldMission);
+
         outState.putIntegerArrayList("mission_state",state);
 
         outState.putStringArrayList("timestamp",timeStemp);
         outState.putStringArrayList("edit_timestamp",editTimeStemp);
         outState.putIntegerArrayList("mission_id",ids);
-
-        Log.d("why would you", String.valueOf(exampleList.size()));
 
     }
 
