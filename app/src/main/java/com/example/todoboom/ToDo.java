@@ -4,17 +4,25 @@ package com.example.todoboom;
 
 public class ToDo {
     // Instance Variables
-    private String one_mission;
-    private Integer mission_done;
+    private String content ;
+    private String oldContent;
+    private String creation_timestamp;
+    private String edit_timestamp;
+    private Integer mission_id;
+    private Integer is_done;
+
 
     static final int DONE = 1;
     static final int NOT_DONE = 0;
 
     // Constructor Declaration of Class
-    public ToDo(String name, int state)
+    public ToDo(String name, String timestamp, String editstamp,  int state, int newId)
     {
-        this.one_mission = name;
-        this.mission_done = state;
+        this.content = name;
+        this.creation_timestamp = timestamp;
+        this.edit_timestamp = editstamp;
+        this.is_done = state;
+        this.mission_id = newId;
     }
 
     /**
@@ -22,7 +30,7 @@ public class ToDo {
      */
     public Integer get_mission_state()
     {
-        return mission_done;
+        return is_done;
     }
 
     /**
@@ -30,8 +38,25 @@ public class ToDo {
      */
     public void mark_mission_done()
     {
-        mission_done = DONE;
-        one_mission = one_mission + "  done!";
+        is_done = DONE;
+        this.oldContent = content;
+        this.content  = content  + "  done!";
+    }
+
+    /**
+     * changes the status of the mission to done
+     */
+    public void mark_mission_not_done(String editstamp)
+    {
+        is_done = NOT_DONE;
+        this.content = oldContent;
+        this.edit_timestamp = editstamp;
+    }
+
+    public void edit_mission(String edited, String editstamp)
+    {
+        this.content = edited;
+        this.edit_timestamp = editstamp;
     }
 
     /**
@@ -39,7 +64,31 @@ public class ToDo {
      */
     public String get_one_mission()
     {
-        return one_mission;
+        return content ;
+    }
+
+    /**
+     * @return the timestamp (string)
+     */
+    public String get_creation_timestamp()
+    {
+        return creation_timestamp ;
+    }
+
+    /**
+     * @return the edit_timestamp (string)
+     */
+    public String get_edit_timestamp()
+    {
+        return edit_timestamp ;
+    }
+
+    /**
+     * @return the mission_id (int)
+     */
+    public Integer get_mission_id()
+    {
+        return mission_id ;
     }
 
 }

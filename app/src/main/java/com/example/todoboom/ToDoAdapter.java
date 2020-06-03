@@ -20,7 +20,7 @@ public class ToDoAdapter extends RecyclerView.Adapter<ToDoAdapter.ToDoViewHolder
     public interface OnItemClickListener
     {
         void onItemClick(int position);
-        void onLongItemClick(int position); // called when there is a long click
+//        void onLongItemClick(int position); // called when there is a long click
     }
     public void setOnItemClickListener(ToDoAdapter.OnItemClickListener listener)
     {
@@ -52,22 +52,22 @@ public class ToDoAdapter extends RecyclerView.Adapter<ToDoAdapter.ToDoViewHolder
                 }
             });
 
-            itemView.setOnLongClickListener(new View.OnLongClickListener()
-            {
-                @Override
-                public boolean onLongClick(View v)
-                {
-                    if (listener != null) {
-                        int position = getAdapterPosition();
-                        if (position != RecyclerView.NO_POSITION)
-                        {
-                            listener.onLongItemClick(position);
-                        }
-                        return true;
-                    }
-                    return false;
-                }
-            });
+//            itemView.setOnLongClickListener(new View.OnLongClickListener()
+//            {
+//                @Override
+//                public boolean onLongClick(View v)
+//                {
+//                    if (listener != null) {
+//                        int position = getAdapterPosition();
+//                        if (position != RecyclerView.NO_POSITION)
+//                        {
+//                            listener.onLongItemClick(position);
+//                        }
+//                        return true;
+//                    }
+//                    return false;
+//                }
+//            });
         }
     }
 
@@ -97,8 +97,8 @@ public class ToDoAdapter extends RecyclerView.Adapter<ToDoAdapter.ToDoViewHolder
         ToDo currentItem = myTodoList.get(position);
         if (currentItem.get_mission_state() == ToDo.DONE)
         {
-            holder.oneTaskText.setTextColor(Color.GRAY);
             holder.oneTaskText.setText(currentItem.get_one_mission());
+            holder.oneTaskText.setTextColor(Color.GRAY);
         }
         else
         {

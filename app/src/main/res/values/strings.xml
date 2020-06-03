@@ -4,4 +4,10 @@
     <string name="what_do_i_need_to_do">please write something</string>
     <string name="hello_friend">Hello friend</string>
     <string name="one_task">one task</string>
+    <string name="apply">apply</string>
+    <string name="done">done</string>
+    <string name="not_done">not done</string>
+    <string name="delete">delete</string>
+    <string name="create_time">create time:</string>
+    <string name="edit_time">last edit time:</string>
 </resources>
