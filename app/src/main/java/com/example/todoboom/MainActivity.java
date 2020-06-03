@@ -40,8 +40,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
-
-// last one
+// last
 
 public class MainActivity extends AppCompatActivity
 {
